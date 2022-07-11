@@ -5,6 +5,6 @@ namespace transport_catalogue
 {
 	namespace output_requests_processing
 	{
-		void TransportCatalogueRequests(const TransportCatalogue& transportCatalogue);
+		void TransportCatalogueRequests(const TransportCatalogue& transportCatalogue, std::vector<std::string> requests);
 	}
 }

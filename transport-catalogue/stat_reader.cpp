@@ -11,18 +11,8 @@ namespace transport_catalogue
 	{
 		using namespace std::string_literals;
 
-		void TransportCatalogueRequests(const TransportCatalogue& transportCatalogue)
+		void TransportCatalogueRequests(const TransportCatalogue& transportCatalogue, std::vector<std::string> requests)
 		{
-			std::list<std::string> requests;
-			std::string line;
-			std::getline(std::cin, line);
-			size_t numberOfRequests = std::stoul(line);
-			for (size_t i = 0; i < numberOfRequests; ++i)
-			{
-				std::getline(std::cin, line);
-				requests.emplace_back(std::move(line));
-			}
-
 			for (std::string& request : requests)
 			{
 				std::string delimiter = " "s;

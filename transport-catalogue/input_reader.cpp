@@ -28,45 +28,32 @@ namespace transport_catalogue
 				transportCatalogue.FindStop(currStopName)->coords);
 		}
 
-		void UpdateTransportCatalogue(TransportCatalogue& transportCatalogue)
+		std::string ReadLine()
 		{
-			// Обрабатываем остановки
-			std::forward_list<std::pair<std::string, std::string>> stopsRequests;
-			std::forward_list<std::string> busRequests;
 			std::string line;
 			std::getline(std::cin, line);
-			size_t numberOfRequests = std::stoul(line);
-			for (size_t i = 0; i < numberOfRequests; ++i)
-			{
-				std::getline(std::cin, line);
-				std::string requestType = /*detail::*/WithdrawToken(line, " "s);
+			return line;
+		}
 
-				if (requestType == "Stop"s)
-				{
-					std::string stopName = WithdrawToken(line, ": "s);
-					double latitude = std::stod(WithdrawToken(line, ", "s));
-					double longitude = std::stod(WithdrawToken(line, ", "s));
-					transportCatalogue.AddStop(stopName, latitude, longitude);
-					stopsRequests.emplace_front(std::move(stopName), std::move(line));
-				}
-				else if (requestType == "Bus"s)
-				{
-					busRequests.emplace_front(std::move(line));
-				}
+
+		std::vector<std::string> ReadLines(int count)
+		{
+			std::vector<std::string> result;
+			result.reserve(count);
+			int i = 0;
+			while (i < count) {
+				result.push_back(ReadLine());
+				i++;
 			}
+			return result;
+		}
 
-			// Обрабатываем расстояние между остановками
-			for (auto& stopRequest : stopsRequests)
-			{
-				while (stopRequest.second.find("m "s) != std::string::npos)
-				{
-					unsigned int distance = std::stoul(WithdrawToken(stopRequest.second, "m to "s));
-					std::string toStop = WithdrawToken(stopRequest.second, ", "s);
-					transportCatalogue.AddDistanceBetweenStops(stopRequest.first, toStop, distance);
-				}
-			}
 
-			// Обрабатываем маршруты автобусов
+
+
+
+		void AddRoute(TransportCatalogue& transportCatalogue, std::forward_list<std::string>& busRequests)
+		{
 			for (std::string& busRequest : busRequests)
 			{
 				std::string busNumber = WithdrawToken(busRequest, ": "s);
@@ -135,6 +122,52 @@ namespace transport_catalogue
 					transportCatalogue.AddBusRelatedToStop(stop, busNumber);
 				}
 			}
+		}
+
+
+
+
+		void AddStops(TransportCatalogue& transportCatalogue, std::forward_list<std::pair<std::string, std::string>> stopsRequests)
+		{
+			for (auto& stopRequest : stopsRequests)
+			{
+				while (stopRequest.second.find("m "s) != std::string::npos)
+				{
+					unsigned int distance = std::stoul(WithdrawToken(stopRequest.second, "m to "s));
+					std::string toStop = WithdrawToken(stopRequest.second, ", "s);
+					transportCatalogue.AddDistanceBetweenStops(stopRequest.first, toStop, distance);
+				}
+			}
+		}
+
+
+
+
+		void UpdateTransportCatalogue(TransportCatalogue& transportCatalogue, std::vector<std::string>& lines)
+		{
+			// Обрабатываем остановки
+			std::forward_list<std::pair<std::string, std::string>> stopsRequests;
+			std::forward_list<std::string> busRequests;
+			for (auto line : lines) {
+				//Заменить на функции заполнения
+				std::string requestType = WithdrawToken(line, " "s);
+
+				if (requestType == "Stop"s)
+				{
+					std::string stopName = WithdrawToken(line, ": "s);
+					double latitude = std::stod(WithdrawToken(line, ", "s));
+					double longitude = std::stod(WithdrawToken(line, ", "s));
+					transportCatalogue.AddStop(stopName, latitude, longitude);
+					stopsRequests.emplace_front(std::move(stopName), std::move(line));
+				}
+				else if (requestType == "Bus"s)
+				{
+					busRequests.emplace_front(std::move(line));
+				}
+			}
+			AddStops(transportCatalogue, stopsRequests);
+			AddRoute(transportCatalogue, busRequests);
+
 		}
 	}
 }

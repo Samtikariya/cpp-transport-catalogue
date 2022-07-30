@@ -1,30 +1,23 @@
-#include "transport_catalogue.h" 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include "transport_catalogue.h"
+#include "json_reader.h"
+#include "svg.h"
 
-#include "input_reader.h" 
+#include <iostream>
 
-#include "stat_reader.h" 
-
-
-using namespace transport_catalogue;
-
-
-void InLines(TransportCatalogue& transportCatalogue)
-{
-	std::vector<std::string> data = input_requests_processing::ReadLines(stoi(input_requests_processing::ReadLine()));
-	input_requests_processing::UpdateTransportCatalogue(transportCatalogue, data);
-}
-
-void OutLines(TransportCatalogue& transportCatalogue)
-{
-	std::vector<std::string> data = input_requests_processing::ReadLines(stoi(input_requests_processing::ReadLine()));
-	output_requests_processing::TransportCatalogueRequests(transportCatalogue, data);
-}
+using namespace std;
+using namespace std::literals;
+using namespace transport;
 
 int main()
 {
-	TransportCatalogue transportCatalogue;
-	InLines(transportCatalogue);
-	OutLines(transportCatalogue);
-
-	return 0;
+	std::ifstream in_file("C:\\Yandex Practicum\\S10 Final project\\input1.txt");
+	std::ofstream out_file("C:\\Yandex Practicum\\S10 Final project\\out1.txt");
+	TransportCatalogue transport_cat;
+	json_reader::Reader reader(transport_cat);
+	reader.ReadJSON(in_file);
+	reader.ParseRequests();
+	reader.GetResponses(out_file);
 }

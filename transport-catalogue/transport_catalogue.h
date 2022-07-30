@@ -1,82 +1,44 @@
 #pragma once
-#include "geo.h"
+
+#include "domain.h"
+
 #include <string>
+#include <string_view>
 #include <deque>
+#include <unordered_set>
 #include <unordered_map>
-#include <tuple>
+#include <vector>
 #include <set>
-#include <utility>
+#include <optional>
 
-namespace transport_catalogue
+namespace transport
 {
-	enum class ERouteType
-	{
-		Circular,
-		Pendulum
-	};
 
-	struct Stop
-	{
-		Coordinates coords;
-	};
-
-	struct Bus
-	{
-		std::string name;
-		ERouteType routeType;
-		size_t uniqueStops;
-		size_t stopsOnRoute;
-		unsigned int facticalRouteLength;
-		double routeCurvature;
-	};
-
-
-	struct CmpBuses
-	{
-	public:
-		bool operator() (const Bus* lhs, const Bus* rhs) const
-		{
-			return lhs->name < rhs->name;
-		}
-	};
-
-	// РСЃРїРѕР»СЊР·СѓРµРј "magic" hashing constants 0x9e3779b9
-	struct PairHash
-	{
-		template <class T1, class T2>
-		std::size_t operator() (const std::pair<T1, T2>& pair) const
-		{
-			std::size_t seed = 0;
-			auto hash1 = std::hash<const void*>{}(pair.first);
-			auto hash2 = std::hash<const void*>{}(pair.second);
-			seed ^= hash1 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-			seed ^= hash2 + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-			return seed;
-		}
-	};
+	using sv_set = std::set<std::string_view, std::less<>>;
+	using Distances_btw_stops = std::unordered_map<std::pair<const domain::Stop*, const domain::Stop*>, int, domain::StopsHasher>;
 
 	class TransportCatalogue
 	{
-	private:
-		std::unordered_map<std::string, const Bus*> buses_;
-		std::deque<Bus> busesInfo_;
-		std::unordered_map<std::string, const Stop*> stops_;
-		std::deque<Stop> stopsCoords_;
-		std::unordered_map<const Stop*, std::set<const Bus*, CmpBuses>> busesRelatedToStop_;
-		std::unordered_map<std::pair<const Stop*, const Stop*>, unsigned int, PairHash> stopsDistances_;
-
-
 	public:
-		void AddBus(std::string busNumber, ERouteType routeType, size_t uniqueStops, size_t stopsOnRoute,
-			unsigned int facticalRouteLength, double routeCurvature);
-		void AddStop(std::string name, double latitude, double longitude);
-		void AddBusRelatedToStop(const Stop* stopPtr, const std::string& busNumber);
-		const Bus* FindBus(const std::string& name) const;
-		const Stop* FindStop(const std::string& name) const;
-		std::tuple<size_t, size_t, unsigned int, double> GetRouteInfo(const Bus* ptr) const;
-		const std::set<const Bus*, CmpBuses>* GetBusesRelatedToStop(const Stop* ptr) const;
+		int GetRoutesInfoSize();
+		void AddBus(const std::string& name, std::vector<const domain::Stop*> stops,
+			const std::unordered_set<std::string_view>& unique_stops, bool is_round);
+		void AddStop(const std::string& name, geo::Coordinates coordinates);
+		const domain::Bus* SearchBus(std::string_view bus_name) const;
+		const domain::Stop* SearchStop(std::string_view stop_name) const;
+		domain::RouteInfo GetRouteInfo(const domain::Bus* bus) const;
+		const sv_set* GetStopToBuses(const domain::Stop* stop) const;
+		void SetDistanceBetweenStops(const domain::Stop* stop_a, const domain::Stop* stop_b, int distance);
+		int GetDistanceBetweenStops(const domain::Stop* stop_a, const domain::Stop* stop_b) const;
 
-		void AddDistanceBetweenStops(const std::string& fromStop, const std::string& toStop, unsigned int distance);
-		unsigned int GetDistanceBetweenStops(const std::string& fromStop, const std::string& toStop);
+	private:
+		std::deque<domain::Stop>									stops_;
+		std::deque<domain::Bus>										buses_;
+		std::unordered_map<std::string_view, const domain::Bus*>	name_to_bus_;
+		std::unordered_map<std::string_view, const domain::Stop*>	name_to_stop_;
+		std::unordered_map<const domain::Stop*, sv_set>				stop_to_buses_;
+		Distances_btw_stops											distances_btw_stops_;
+		std::unordered_map<const domain::Bus*, domain::RouteInfo>	routes_info_;
 	};
-}
+
+} // завершение namespace transport
